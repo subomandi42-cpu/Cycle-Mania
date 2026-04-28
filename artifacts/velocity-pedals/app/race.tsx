@@ -29,6 +29,7 @@ import {
   deriveStats,
   TRACKS,
   TrackId,
+  TrackTheme,
 } from "@/constants/game";
 import { useGame } from "@/contexts/GameContext";
 import { useColors } from "@/hooks/useColors";
@@ -89,7 +90,7 @@ export default function RaceScreen() {
   const stageIndex = params.stage ? Number(params.stage) : undefined;
 
   const track = TRACKS[trackId];
-  const { state, recordRace } = useGame();
+  const { state, recordRace, selectedColorHex } = useGame();
   const stats = useMemo(() => deriveStats(state.upgrades), [state.upgrades]);
 
   const roadWidth = Math.min(width * 0.92, 480);
@@ -528,6 +529,7 @@ export default function RaceScreen() {
             entity={e}
             x={laneCenterX(e.lane)}
             accent={track.accent}
+            theme={track.theme}
           />
         ))}
 
@@ -542,7 +544,7 @@ export default function RaceScreen() {
         >
           <BikeSprite
             size={64}
-            color={track.accent}
+            color={selectedColorHex}
             frame={isPedaling ? "#ffffff" : "#0a0e27"}
           />
         </View>
@@ -948,14 +950,100 @@ function SpeedLines({ width, height }: { width: number; height: number }) {
   );
 }
 
+function DesertObstacle({
+  variant,
+  x,
+  y,
+}: {
+  variant: number;
+  x: number;
+  y: number;
+}) {
+  if (variant === 0) {
+    // Saguaro cactus
+    return (
+      <View
+        style={{ position: "absolute", left: x - 18, top: y - 38 }}
+        pointerEvents="none"
+      >
+        <Svg width={36} height={56} viewBox="0 0 36 56">
+          <Rect x={2} y={36} width={32} height={6} rx={2} fill="#8a5a2c" />
+          <Rect x={14} y={6} width={8} height={48} rx={4} fill="#2f7d3a" />
+          <Path
+            d="M14 18 Q8 18 8 26 L8 32 L12 32 L12 26 Q12 22 14 22 Z"
+            fill="#2f7d3a"
+          />
+          <Path
+            d="M22 14 Q28 14 28 22 L28 30 L24 30 L24 22 Q24 18 22 18 Z"
+            fill="#2f7d3a"
+          />
+          <Rect x={15} y={10} width={1.5} height={4} fill="#4ea655" />
+          <Rect x={20} y={16} width={1.5} height={4} fill="#4ea655" />
+          <Rect x={16} y={28} width={1.5} height={4} fill="#4ea655" />
+        </Svg>
+      </View>
+    );
+  }
+  if (variant === 1) {
+    // Rock cluster
+    return (
+      <View
+        style={{ position: "absolute", left: x - 22, top: y - 14 }}
+        pointerEvents="none"
+      >
+        <Svg width={44} height={28} viewBox="0 0 44 28">
+          <Path
+            d="M2 24 L8 12 L16 8 L24 14 L20 24 Z"
+            fill="#7a5836"
+            stroke="#3a2a1a"
+            strokeWidth={1.5}
+          />
+          <Path
+            d="M20 24 L28 10 L36 14 L42 24 Z"
+            fill="#a07845"
+            stroke="#3a2a1a"
+            strokeWidth={1.5}
+          />
+          <Path d="M10 14 L12 10 L14 14 Z" fill="#5e4226" />
+        </Svg>
+      </View>
+    );
+  }
+  // Tumbleweed
+  return (
+    <View
+      style={{ position: "absolute", left: x - 16, top: y - 16 }}
+      pointerEvents="none"
+    >
+      <Svg width={32} height={32} viewBox="0 0 32 32">
+        <Circle
+          cx={16}
+          cy={16}
+          r={13}
+          fill="#caa46a"
+          stroke="#7a5028"
+          strokeWidth={1.5}
+        />
+        <Path
+          d="M5 12 L26 18 M8 22 L24 8 M3 18 L28 16 M14 4 L18 28"
+          stroke="#7a5028"
+          strokeWidth={1.5}
+        />
+      </Svg>
+    </View>
+  );
+}
+
 function EntityView({
   entity,
   x,
   accent,
+  theme,
 }: {
   entity: Entity;
   x: number;
   accent: string;
+  theme: TrackTheme;
 }) {
   if (entity.type === "coin") {
     return (
@@ -983,6 +1071,9 @@ function EntityView({
   }
   if (entity.type === "obstacle") {
     const v = entity.variant ?? 0;
+    if (theme === "desert") {
+      return <DesertObstacle variant={v} x={x} y={entity.y} />;
+    }
     if (v === 0) {
       // car
       return (

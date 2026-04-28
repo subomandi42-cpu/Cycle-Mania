@@ -46,22 +46,28 @@ export function GameButton({
       bg: colors.primary,
       text: colors.primaryForeground,
       border: colors.primary,
+      shadow: "#7fbf00",
+      glow: "rgba(198,255,58,0.45)",
     },
     secondary: {
       bg: colors.secondary,
       text: colors.secondaryForeground,
       border: colors.border,
+      shadow: "#0a0e27",
+      glow: "rgba(10,14,39,0.55)",
     },
     ghost: {
       bg: "transparent",
       text: colors.foreground,
       border: colors.border,
+      shadow: "transparent",
+      glow: "transparent",
     },
   }[variant];
 
   const sizing = {
-    md: { paddingV: 14, paddingH: 18, font: 15, iconSize: 18 },
-    lg: { paddingV: 20, paddingH: 22, font: 17, iconSize: 22 },
+    md: { paddingV: 14, paddingH: 18, font: 15, iconSize: 18, radius: 18 },
+    lg: { paddingV: 20, paddingH: 22, font: 17, iconSize: 22, radius: 22 },
   }[size];
 
   const handlePress = () => {
@@ -71,6 +77,18 @@ export function GameButton({
     }
     onPress?.();
   };
+
+  // Gamey "raised plate" shadow: a hard color offset (the chunky 3D base)
+  // plus a soft drop shadow for ambient depth. On press we collapse the
+  // hard offset and translate the button down to feel satisfying.
+  const restingShadow =
+    variant === "ghost"
+      ? "none"
+      : `0px 4px 0px ${palette.shadow}, 0px 8px 14px ${palette.glow}`;
+  const pressedShadow =
+    variant === "ghost"
+      ? "none"
+      : `0px 1px 0px ${palette.shadow}, 0px 2px 4px ${palette.glow}`;
 
   return (
     <Pressable
@@ -82,11 +100,17 @@ export function GameButton({
         {
           backgroundColor: palette.bg,
           borderColor: palette.border,
-          borderRadius: colors.radius,
+          borderRadius: sizing.radius,
           paddingVertical: sizing.paddingV,
           paddingHorizontal: sizing.paddingH,
-          opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
-          transform: pressed ? [{ scale: 0.98 }] : undefined,
+          opacity: disabled ? 0.55 : 1,
+          transform: pressed
+            ? [{ translateY: 3 }, { scale: 0.99 }]
+            : undefined,
+          // boxShadow is supported on web + RN 0.76+. We keep elevation as a
+          // safe Android fallback so the depth still reads on older devices.
+          boxShadow: pressed ? pressedShadow : restingShadow,
+          elevation: variant === "ghost" ? 0 : pressed ? 1 : 4,
         },
         style,
       ]}

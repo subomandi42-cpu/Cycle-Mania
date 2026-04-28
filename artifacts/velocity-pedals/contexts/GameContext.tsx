@@ -8,7 +8,14 @@ import React, {
   useState,
 } from "react";
 
-import { MAX_LEVEL, TrackId, Upgrades, UpgradeKey } from "@/constants/game";
+import {
+  BIKE_COLORS,
+  BikeColorId,
+  MAX_LEVEL,
+  TrackId,
+  Upgrades,
+  UpgradeKey,
+} from "@/constants/game";
 
 type BestTimes = Partial<Record<TrackId, number>>;
 
@@ -19,6 +26,8 @@ type SaveShape = {
   bestTimes: BestTimes;
   totalDistance: number;
   totalRaces: number;
+  ownedColors: BikeColorId[];
+  selectedColor: BikeColorId;
 };
 
 const DEFAULT_SAVE: SaveShape = {
@@ -28,9 +37,11 @@ const DEFAULT_SAVE: SaveShape = {
   bestTimes: {},
   totalDistance: 0,
   totalRaces: 0,
+  ownedColors: ["yellow"],
+  selectedColor: "yellow",
 };
 
-const STORAGE_KEY = "velocity-pedals:save:v1";
+const STORAGE_KEY = "velocity-pedals:save:v2";
 
 type RaceSummary = {
   trackId: TrackId;
@@ -57,6 +68,9 @@ type GameContextValue = {
   }) => RaceSummary;
   buyUpgrade: (key: UpgradeKey, cost: number) => boolean;
   addBonusCoins: (amount: number) => void;
+  buyBikeColor: (id: BikeColorId) => boolean;
+  selectBikeColor: (id: BikeColorId) => boolean;
+  selectedColorHex: string;
   reset: () => void;
 };
 
@@ -163,13 +177,68 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, coins: prev.coins + amount }));
   }, []);
 
+  const buyBikeColor = useCallback<GameContextValue["buyBikeColor"]>((id) => {
+    let success = false;
+    setState((prev) => {
+      if (prev.ownedColors.includes(id)) return prev;
+      const def = BIKE_COLORS[id];
+      if (!def) return prev;
+      if (prev.coins < def.cost) return prev;
+      success = true;
+      return {
+        ...prev,
+        coins: prev.coins - def.cost,
+        ownedColors: [...prev.ownedColors, id],
+        selectedColor: id,
+      };
+    });
+    return success;
+  }, []);
+
+  const selectBikeColor = useCallback<GameContextValue["selectBikeColor"]>(
+    (id) => {
+      let success = false;
+      setState((prev) => {
+        if (!prev.ownedColors.includes(id)) return prev;
+        if (prev.selectedColor === id) return prev;
+        success = true;
+        return { ...prev, selectedColor: id };
+      });
+      return success;
+    },
+    [],
+  );
+
   const reset = useCallback(() => {
     setState(DEFAULT_SAVE);
   }, []);
 
+  const selectedColorHex =
+    BIKE_COLORS[state.selectedColor]?.color ?? BIKE_COLORS.yellow.color;
+
   const value = useMemo<GameContextValue>(
-    () => ({ ready, state, recordRace, buyUpgrade, addBonusCoins, reset }),
-    [ready, state, recordRace, buyUpgrade, addBonusCoins, reset],
+    () => ({
+      ready,
+      state,
+      recordRace,
+      buyUpgrade,
+      addBonusCoins,
+      buyBikeColor,
+      selectBikeColor,
+      selectedColorHex,
+      reset,
+    }),
+    [
+      ready,
+      state,
+      recordRace,
+      buyUpgrade,
+      addBonusCoins,
+      buyBikeColor,
+      selectBikeColor,
+      selectedColorHex,
+      reset,
+    ],
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

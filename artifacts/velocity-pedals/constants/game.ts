@@ -1,6 +1,8 @@
 export type Weather = "clear" | "rain" | "wind";
 
-export type TrackId = "urban" | "alpine" | "coastal";
+export type TrackId = "urban" | "alpine" | "coastal" | "desert";
+
+export type TrackTheme = "city" | "alpine" | "coastal" | "desert";
 
 export type Track = {
   id: TrackId;
@@ -13,13 +15,14 @@ export type Track = {
   road: string;
   lane: string;
   accent: string;
-  image: number;
+  theme: TrackTheme;
+  image?: number;
 };
 
 export const TRACKS: Record<TrackId, Track> = {
   urban: {
     id: "urban",
-    name: "Urban Jungle",
+    name: "City Sprint",
     subtitle: "Sunset sprint through downtown traffic",
     distance: 1500,
     weather: "clear",
@@ -28,6 +31,7 @@ export const TRACKS: Record<TrackId, Track> = {
     road: "#1a1f3a",
     lane: "#3a4068",
     accent: "#c6ff3a",
+    theme: "city",
     image: require("../assets/images/track-urban.png"),
   },
   alpine: {
@@ -41,6 +45,7 @@ export const TRACKS: Record<TrackId, Track> = {
     road: "#2a3142",
     lane: "#4d5670",
     accent: "#7df0ff",
+    theme: "alpine",
     image: require("../assets/images/track-alpine.png"),
   },
   coastal: {
@@ -54,11 +59,43 @@ export const TRACKS: Record<TrackId, Track> = {
     road: "#7a8baa",
     lane: "#a8b8d0",
     accent: "#ff6b9d",
+    theme: "coastal",
     image: require("../assets/images/track-coastal.png"),
+  },
+  desert: {
+    id: "desert",
+    name: "Desert Dunes",
+    subtitle: "Sunset sprint past saguaro cacti",
+    distance: 1700,
+    weather: "clear",
+    skyTop: "#ff6f2c",
+    skyBottom: "#ffc36b",
+    road: "#c89a5e",
+    lane: "#a47a44",
+    accent: "#ffba2d",
+    theme: "desert",
   },
 };
 
-export const TRACK_ORDER: TrackId[] = ["urban", "alpine", "coastal"];
+export const TRACK_ORDER: TrackId[] = ["urban", "desert", "coastal", "alpine"];
+
+export type BikeColorId = "yellow" | "neon" | "red" | "blue";
+
+export type BikeColor = {
+  id: BikeColorId;
+  name: string;
+  color: string;
+  cost: number;
+};
+
+export const BIKE_COLORS: Record<BikeColorId, BikeColor> = {
+  yellow: { id: "yellow", name: "Default Yellow", color: "#ffd23a", cost: 0 },
+  neon: { id: "neon", name: "Neon Green", color: "#c6ff3a", cost: 500 },
+  red: { id: "red", name: "Hot Red", color: "#ff3b5b", cost: 1000 },
+  blue: { id: "blue", name: "Midnight Blue", color: "#3a5cff", cost: 1500 },
+};
+
+export const BIKE_COLOR_ORDER: BikeColorId[] = ["yellow", "neon", "red", "blue"];
 
 export type UpgradeKey = "tires" | "frame" | "gear";
 

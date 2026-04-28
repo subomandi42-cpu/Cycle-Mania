@@ -36,7 +36,7 @@ function formatTime(t: number) {
 export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { state } = useGame();
+  const { state, selectedColorHex } = useGame();
   const stats = deriveStats(state.upgrades);
   const careerStage = state.careerStage;
   const careerDone = careerStage >= CAREER_STAGES.length;
@@ -109,7 +109,7 @@ export default function HomeScreen() {
               </View>
             </View>
             <View style={{ alignItems: "center", justifyContent: "center" }}>
-              <BikeSprite size={120} color={colors.primary} frame="#fff" />
+              <BikeSprite size={120} color={selectedColorHex} frame="#fff" />
             </View>
           </View>
 
@@ -220,11 +220,20 @@ export default function HomeScreen() {
                 },
               ]}
             >
-              <Image
-                source={t.image}
-                style={StyleSheet.absoluteFillObject}
-                contentFit="cover"
-              />
+              {t.image ? (
+                <Image
+                  source={t.image}
+                  style={StyleSheet.absoluteFillObject}
+                  contentFit="cover"
+                />
+              ) : (
+                <LinearGradient
+                  colors={[t.skyTop, t.skyBottom]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFillObject}
+                />
+              )}
               <LinearGradient
                 colors={["transparent", "rgba(7,11,31,0.85)"]}
                 style={StyleSheet.absoluteFillObject}

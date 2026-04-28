@@ -15,6 +15,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BikeSprite } from "@/components/BikeSprite";
 import { GameButton } from "@/components/GameButton";
 import {
+  BIKE_COLOR_ORDER,
+  BIKE_COLORS,
+  BikeColorId,
   MAX_LEVEL,
   UPGRADE_INFO,
   UpgradeKey,
@@ -29,7 +32,13 @@ const KEYS: UpgradeKey[] = ["tires", "frame", "gear"];
 export default function GarageScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { state, buyUpgrade } = useGame();
+  const {
+    state,
+    buyUpgrade,
+    buyBikeColor,
+    selectBikeColor,
+    selectedColorHex,
+  } = useGame();
   const stats = deriveStats(state.upgrades);
 
   const webBotPad = Platform.OS === "web" ? 34 : 0;
@@ -107,7 +116,7 @@ export default function GarageScreen() {
               paddingVertical: 18,
             }}
           >
-            <BikeSprite size={170} color={colors.primary} frame="#fff" />
+            <BikeSprite size={170} color={selectedColorHex} frame="#fff" />
           </View>
           <View style={styles.previewStats}>
             <PreviewStat
@@ -131,6 +140,24 @@ export default function GarageScreen() {
               unit="x"
             />
           </View>
+        </View>
+
+        {/* Paint Shop */}
+        <Text style={[styles.bigLabel, { color: colors.mutedForeground }]}>
+          PAINT SHOP
+        </Text>
+        <View style={styles.colorGrid}>
+          {BIKE_COLOR_ORDER.map((id) => (
+            <PaintCard
+              key={id}
+              id={id}
+              owned={state.ownedColors.includes(id)}
+              selected={state.selectedColor === id}
+              coins={state.coins}
+              onBuy={() => buyBikeColor(id)}
+              onEquip={() => selectBikeColor(id)}
+            />
+          ))}
         </View>
 
         {/* Upgrade list */}
@@ -238,6 +265,143 @@ export default function GarageScreen() {
           );
         })}
       </ScrollView>
+    </View>
+  );
+}
+
+function PaintCard({
+  id,
+  owned,
+  selected,
+  coins,
+  onBuy,
+  onEquip,
+}: {
+  id: BikeColorId;
+  owned: boolean;
+  selected: boolean;
+  coins: number;
+  onBuy: () => void;
+  onEquip: () => void;
+}) {
+  const colors = useColors();
+  const def = BIKE_COLORS[id];
+  const canAfford = coins >= def.cost;
+
+  return (
+    <View
+      style={[
+        styles.colorCard,
+        {
+          backgroundColor: colors.card,
+          borderColor: selected ? def.color : colors.border,
+          borderWidth: selected ? 2 : 1,
+        },
+      ]}
+    >
+      {selected && (
+        <View
+          style={[
+            styles.selectedBadge,
+            {
+              backgroundColor: def.color,
+            },
+          ]}
+        >
+          <Feather name="check" size={10} color="#070b1f" />
+          <Text style={styles.selectedBadgeText}>EQUIPPED</Text>
+        </View>
+      )}
+
+      <View
+        style={[
+          styles.swatch,
+          { backgroundColor: "#0a0e27", borderColor: def.color },
+        ]}
+      >
+        <BikeSprite size={66} color={def.color} frame="#fff" />
+      </View>
+
+      <Text style={[styles.colorName, { color: colors.foreground }]}>
+        {def.name}
+      </Text>
+
+      {owned ? (
+        selected ? (
+          <View
+            style={[
+              styles.colorChipNeutral,
+              { backgroundColor: colors.muted, borderColor: colors.border },
+            ]}
+          >
+            <Feather name="check" size={11} color={colors.mutedForeground} />
+            <Text
+              style={[styles.colorChipText, { color: colors.mutedForeground }]}
+            >
+              In use
+            </Text>
+          </View>
+        ) : (
+          <Pressable
+            onPress={onEquip}
+            style={({ pressed }) => [
+              styles.equipBtn,
+              {
+                backgroundColor: def.color,
+                opacity: pressed ? 0.85 : 1,
+                transform: pressed ? [{ scale: 0.98 }] : undefined,
+              },
+            ]}
+          >
+            <Feather name="check-circle" size={13} color="#070b1f" />
+            <Text style={styles.equipBtnText}>Equip</Text>
+          </Pressable>
+        )
+      ) : def.cost === 0 ? (
+        <View
+          style={[
+            styles.colorChipNeutral,
+            { backgroundColor: colors.muted, borderColor: colors.border },
+          ]}
+        >
+          <Feather name="gift" size={11} color={colors.mutedForeground} />
+          <Text
+            style={[styles.colorChipText, { color: colors.mutedForeground }]}
+          >
+            Free
+          </Text>
+        </View>
+      ) : (
+        <Pressable
+          onPress={canAfford ? onBuy : undefined}
+          disabled={!canAfford}
+          style={({ pressed }) => [
+            styles.buyBtn,
+            {
+              backgroundColor: canAfford ? def.color : colors.muted,
+              borderColor: canAfford ? def.color : colors.border,
+              opacity: !canAfford ? 0.7 : pressed ? 0.85 : 1,
+              transform: pressed ? [{ scale: 0.98 }] : undefined,
+            },
+          ]}
+        >
+          <Feather
+            name={canAfford ? "shopping-bag" : "lock"}
+            size={13}
+            color={canAfford ? "#070b1f" : colors.mutedForeground}
+          />
+          <Text
+            style={[
+              styles.buyBtnText,
+              { color: canAfford ? "#070b1f" : colors.mutedForeground },
+            ]}
+          >
+            {canAfford
+              ? `${def.cost} coins`
+              : `Need ${def.cost - coins} more`}
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -369,5 +533,98 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 6,
     marginTop: 12,
+  },
+  colorGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  colorCard: {
+    flexBasis: "48%",
+    flexGrow: 1,
+    borderRadius: 18,
+    padding: 12,
+    alignItems: "center",
+    gap: 10,
+    position: "relative",
+  },
+  selectedBadge: {
+    position: "absolute",
+    top: -6,
+    right: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    zIndex: 1,
+  },
+  selectedBadgeText: {
+    color: "#070b1f",
+    fontSize: 9,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 0.8,
+  },
+  swatch: {
+    width: "100%",
+    aspectRatio: 1.6,
+    borderRadius: 14,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  colorName: {
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+    textAlign: "center",
+  },
+  buyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    width: "100%",
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  buyBtnText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 12,
+    letterSpacing: 0.4,
+  },
+  equipBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    width: "100%",
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+  },
+  equipBtnText: {
+    color: "#070b1f",
+    fontFamily: "Inter_700Bold",
+    fontSize: 12,
+    letterSpacing: 0.4,
+  },
+  colorChipNeutral: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    width: "100%",
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  colorChipText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 12,
+    letterSpacing: 0.4,
   },
 });
