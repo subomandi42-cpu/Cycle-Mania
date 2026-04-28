@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { BannerAdSlot } from "@/components/BannerAdSlot";
 import { BikeSprite } from "@/components/BikeSprite";
 import { GameButton } from "@/components/GameButton";
 import {
@@ -49,7 +50,7 @@ export default function HomeScreen() {
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + 12 + webTopPad,
-          paddingBottom: insets.bottom + 32 + webBotPad,
+          paddingBottom: insets.bottom + 110 + webBotPad,
           paddingHorizontal: 18,
           gap: 18,
         }}
@@ -468,6 +469,19 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <View
+        style={[
+          styles.bannerWrap,
+          {
+            paddingBottom: Math.max(insets.bottom, 8) + webBotPad,
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+          },
+        ]}
+      >
+        <BannerAdSlot />
+      </View>
     </View>
   );
 }
@@ -502,6 +516,15 @@ function PerfStat({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  bannerWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    borderTopWidth: 1,
+  },
   hero: {
     padding: 20,
     borderWidth: 1,

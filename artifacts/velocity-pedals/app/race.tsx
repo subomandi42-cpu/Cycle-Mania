@@ -22,6 +22,7 @@ import Svg, { Circle, Path, Rect } from "react-native-svg";
 
 import { BikeSprite } from "@/components/BikeSprite";
 import { GameButton } from "@/components/GameButton";
+import { RewardedAdOverlay } from "@/components/RewardedAdOverlay";
 import { StatBar } from "@/components/StatBar";
 import {
   CAREER_STAGES,
@@ -36,6 +37,7 @@ const LANE_COUNT = 3;
 const HIT_DISTANCE = 70;
 const DRAFT_RANGE_MIN = 30;
 const DRAFT_RANGE_MAX = 130;
+const STARTING_LIVES = 3;
 
 type Mode = "quick" | "career" | "trial";
 
@@ -51,7 +53,7 @@ type Entity = {
   variant?: number;
 };
 
-type Phase = "countdown" | "racing" | "paused" | "finished";
+type Phase = "countdown" | "racing" | "paused" | "wrecked" | "finished";
 
 let nextEntityId = 1;
 function newId() {
@@ -113,6 +115,9 @@ export default function RaceScreen() {
   const [crashCooldown, setCrashCooldown] = useState(0);
   const [shakeFrame, setShakeFrame] = useState(0);
   const [entities, setEntities] = useState<Entity[]>([]);
+  const [livesRemaining, setLivesRemaining] = useState(STARTING_LIVES);
+  const [revivedThisRace, setRevivedThisRace] = useState(false);
+  const [reviveAdVisible, setReviveAdVisible] = useState(false);
 
   // Refs to avoid stale closures inside the tick
   const phaseRef = useRef(phase);
@@ -125,6 +130,8 @@ export default function RaceScreen() {
   const pedalRef = useRef(false);
   const brakeRef = useRef(false);
   const crashRef = useRef(0);
+  const livesRef = useRef(STARTING_LIVES);
+  const revivedRef = useRef(false);
   const entitiesRef = useRef<Entity[]>([]);
   const spawnTimers = useRef({ coin: 0.4, obstacle: 1.5, opponent: 3 });
 
@@ -330,6 +337,17 @@ export default function RaceScreen() {
         st = Math.max(0, st - 18);
         haptic("heavy");
         setShakeFrame((f) => f + 1);
+        const newLives = Math.max(0, livesRef.current - 1);
+        livesRef.current = newLives;
+        setLivesRemaining(newLives);
+        if (newLives === 0) {
+          // Pause the loop and show wreck overlay
+          pedalRef.current = false;
+          brakeRef.current = false;
+          setIsPedaling(false);
+          setIsBraking(false);
+          setPhase("wrecked");
+        }
       }
 
       // Drafting + slight speed boost when drafting
@@ -422,6 +440,30 @@ export default function RaceScreen() {
   const onQuit = useCallback(() => {
     finishRace(false);
   }, [finishRace]);
+
+  const onRequestRevive = useCallback(() => {
+    setReviveAdVisible(true);
+  }, []);
+
+  const onReviveAdClosed = useCallback(
+    (rewarded: boolean) => {
+      setReviveAdVisible(false);
+      if (!rewarded) return;
+      // Restore one life, give brief invulnerability, resume race.
+      revivedRef.current = true;
+      livesRef.current = 1;
+      crashRef.current = 1.6;
+      speedRef.current = Math.max(stats.baseSpeed, speedRef.current);
+      staminaRef.current = Math.max(60, staminaRef.current);
+      setRevivedThisRace(true);
+      setLivesRemaining(1);
+      setStamina(staminaRef.current);
+      setSpeed(speedRef.current);
+      setPhase("racing");
+      haptic("medium");
+    },
+    [stats.baseSpeed],
+  );
 
   // Lane positions (center x of each lane, relative to road container)
   const laneCenterX = (i: number) => i * laneWidth + laneWidth / 2;
@@ -597,6 +639,16 @@ export default function RaceScreen() {
               {coins} coins
             </Text>
           </View>
+          <View style={styles.coinPill}>
+            <Feather
+              name="heart"
+              size={11}
+              color={livesRemaining > 1 ? "#ff8da3" : "#ff3b5b"}
+            />
+            <Text style={[styles.coinText, { color: "#fff" }]}>
+              {livesRemaining} / {STARTING_LIVES}
+            </Text>
+          </View>
           {drafting && (
             <View
               style={[
@@ -754,6 +806,70 @@ export default function RaceScreen() {
           />
         </View>
       )}
+
+      {/* Wreck overlay */}
+      {phase === "wrecked" && (
+        <View style={styles.overlay}>
+          <View
+            style={{
+              width: 70,
+              height: 70,
+              borderRadius: 999,
+              backgroundColor: "#ff3b5b",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 16,
+            }}
+          >
+            <Feather name="alert-triangle" size={34} color="#fff" />
+          </View>
+          <Text style={[styles.overlayLabel, { color: "#ff3b5b" }]}>
+            YOU WRECKED
+          </Text>
+          <Text
+            style={{
+              color: "#fff",
+              fontFamily: "Inter_700Bold",
+              fontSize: 22,
+              marginTop: 6,
+            }}
+          >
+            Lives 0 / {STARTING_LIVES}
+          </Text>
+          <Text style={styles.overlayHint}>
+            {revivedThisRace
+              ? "You've already used your revive this race."
+              : "Watch a short ad to revive with one life and keep racing."}
+          </Text>
+          <View style={{ height: 18 }} />
+          {!revivedThisRace && (
+            <>
+              <GameButton
+                label="Revive — Watch Ad"
+                onPress={onRequestRevive}
+                icon="gift"
+                size="lg"
+                style={{ minWidth: 240 }}
+              />
+              <View style={{ height: 12 }} />
+            </>
+          )}
+          <GameButton
+            label="End Race"
+            onPress={onQuit}
+            variant="ghost"
+            icon="x"
+            style={{ minWidth: 240 }}
+          />
+        </View>
+      )}
+
+      <RewardedAdOverlay
+        visible={reviveAdVisible}
+        title="Revive and keep racing"
+        reward="+1 life and a brief safety boost"
+        onClose={onReviveAdClosed}
+      />
     </View>
   );
 }

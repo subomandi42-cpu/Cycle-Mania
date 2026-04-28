@@ -15,8 +15,10 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { GameProvider } from "@/contexts/GameContext";
+import { initAds } from "@/lib/ads";
 
 SplashScreen.preventAutoHideAsync();
+initAds().catch(() => {});
 
 const queryClient = new QueryClient();
 

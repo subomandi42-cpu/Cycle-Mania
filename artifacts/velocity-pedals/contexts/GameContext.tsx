@@ -56,6 +56,7 @@ type GameContextValue = {
     careerReward?: number;
   }) => RaceSummary;
   buyUpgrade: (key: UpgradeKey, cost: number) => boolean;
+  addBonusCoins: (amount: number) => void;
   reset: () => void;
 };
 
@@ -157,13 +158,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const addBonusCoins = useCallback((amount: number) => {
+    if (amount <= 0) return;
+    setState((prev) => ({ ...prev, coins: prev.coins + amount }));
+  }, []);
+
   const reset = useCallback(() => {
     setState(DEFAULT_SAVE);
   }, []);
 
   const value = useMemo<GameContextValue>(
-    () => ({ ready, state, recordRace, buyUpgrade, reset }),
-    [ready, state, recordRace, buyUpgrade, reset],
+    () => ({ ready, state, recordRace, buyUpgrade, addBonusCoins, reset }),
+    [ready, state, recordRace, buyUpgrade, addBonusCoins, reset],
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

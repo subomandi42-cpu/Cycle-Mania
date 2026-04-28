@@ -1,12 +1,14 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GameButton } from "@/components/GameButton";
+import { RewardedAdOverlay } from "@/components/RewardedAdOverlay";
 import { TRACKS, TrackId } from "@/constants/game";
+import { useGame } from "@/contexts/GameContext";
 import { useColors } from "@/hooks/useColors";
 
 function fmt(t: number) {
@@ -19,6 +21,7 @@ function fmt(t: number) {
 export default function ResultsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { addBonusCoins } = useGame();
   const params = useLocalSearchParams<{
     track?: string;
     mode?: string;
@@ -42,8 +45,22 @@ export default function ResultsScreen() {
   const best = params.best === "1";
   const advanced = params.advanced === "1";
 
-  const total = coins + bonus;
+  const [doubleAdVisible, setDoubleAdVisible] = useState(false);
+  const [doubled, setDoubled] = useState(false);
+
+  const baseTotal = coins + bonus;
+  const doubleBonus = doubled ? coins : 0;
+  const total = baseTotal + doubleBonus;
   const webBotPad = Platform.OS === "web" ? 34 : 0;
+
+  const canDouble = finished && coins > 0 && !doubled;
+
+  const onDoubleAdClosed = (rewarded: boolean) => {
+    setDoubleAdVisible(false);
+    if (!rewarded) return;
+    addBonusCoins(coins);
+    setDoubled(true);
+  };
 
   return (
     <View
@@ -147,6 +164,14 @@ export default function ResultsScreen() {
               highlight
             />
           )}
+          {doubled && (
+            <ResultRow
+              label="Ad Reward (2x Coins)"
+              value={`+${coins}`}
+              icon="gift"
+              highlight
+            />
+          )}
           <View
             style={[
               styles.totalRow,
@@ -167,10 +192,37 @@ export default function ResultsScreen() {
         </View>
 
         <View style={{ gap: 10 }}>
+          {canDouble && (
+            <GameButton
+              label={`Double Coins — Watch Ad (+${coins})`}
+              icon="gift"
+              size="lg"
+              onPress={() => setDoubleAdVisible(true)}
+            />
+          )}
+          {doubled && (
+            <View
+              style={[
+                styles.doubledChip,
+                {
+                  backgroundColor: colors.primary + "22",
+                  borderColor: colors.primary,
+                },
+              ]}
+            >
+              <Feather name="check" size={14} color={colors.primary} />
+              <Text
+                style={[styles.doubledText, { color: colors.primary }]}
+              >
+                Coins doubled — nice ride!
+              </Text>
+            </View>
+          )}
           <GameButton
             label="Race Again"
             icon="rotate-cw"
-            size="lg"
+            variant={canDouble ? "secondary" : "primary"}
+            size={canDouble ? "md" : "lg"}
             onPress={() =>
               router.replace({
                 pathname: "/race",
@@ -192,6 +244,13 @@ export default function ResultsScreen() {
           />
         </View>
       </View>
+
+      <RewardedAdOverlay
+        visible={doubleAdVisible}
+        title="Double your race coins"
+        reward={`+${coins} extra coins`}
+        onClose={onDoubleAdClosed}
+      />
     </View>
   );
 }
@@ -293,5 +352,19 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: 24,
     fontFamily: "Inter_700Bold",
+  },
+  doubledChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  doubledText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 13,
+    letterSpacing: 0.4,
   },
 });
