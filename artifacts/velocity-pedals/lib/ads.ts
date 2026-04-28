@@ -13,6 +13,11 @@ export const TEST_REWARDED_ID =
     ? "ca-app-pub-3940256099942544/1712485313"
     : "ca-app-pub-3940256099942544/5224354917";
 
+export const TEST_INTERSTITIAL_ID =
+  Platform.OS === "ios"
+    ? "ca-app-pub-3940256099942544/4411468910"
+    : "ca-app-pub-3940256099942544/1033173712";
+
 // Skip native module load when running inside Expo Go — the AdMob native
 // SDK isn't bundled into Expo Go, so any access would crash. A custom
 // development build (eas build / expo prebuild) is required for real ads.
@@ -81,6 +86,54 @@ export async function showRewardedAd(): Promise<boolean> {
         ad.addAdEventListener(m.AdEventType.CLOSED, () => {
           cleanup();
           resolve(earned);
+        }),
+      );
+      subs.push(
+        ad.addAdEventListener(m.AdEventType.ERROR, () => {
+          cleanup();
+          resolve(false);
+        }),
+      );
+      ad.load();
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+export async function showInterstitialAd(): Promise<boolean> {
+  if (!mod) return false;
+  return new Promise<boolean>((resolve) => {
+    try {
+      const m = mod!;
+      const ad = m.InterstitialAd.createForAdRequest(TEST_INTERSTITIAL_ID, {
+        requestNonPersonalizedAdsOnly: true,
+      });
+      const subs: Array<() => void> = [];
+      const cleanup = () => {
+        subs.forEach((u) => {
+          try {
+            u();
+          } catch {
+            // ignore
+          }
+        });
+      };
+
+      subs.push(
+        ad.addAdEventListener(m.AdEventType.LOADED, () => {
+          try {
+            ad.show();
+          } catch {
+            cleanup();
+            resolve(false);
+          }
+        }),
+      );
+      subs.push(
+        ad.addAdEventListener(m.AdEventType.CLOSED, () => {
+          cleanup();
+          resolve(true);
         }),
       );
       subs.push(

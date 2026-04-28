@@ -4,6 +4,7 @@
 
 export const TEST_BANNER_ID = "";
 export const TEST_REWARDED_ID = "";
+export const TEST_INTERSTITIAL_ID = "";
 
 export const adsAvailable = false;
 
@@ -12,6 +13,10 @@ export async function initAds(): Promise<boolean> {
 }
 
 export async function showRewardedAd(): Promise<boolean> {
+  return false;
+}
+
+export async function showInterstitialAd(): Promise<boolean> {
   return false;
 }
 

@@ -1,15 +1,21 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GameButton } from "@/components/GameButton";
+import { InterstitialAdOverlay } from "@/components/InterstitialAdOverlay";
 import { RewardedAdOverlay } from "@/components/RewardedAdOverlay";
 import { TRACKS, TrackId } from "@/constants/game";
 import { useGame } from "@/contexts/GameContext";
 import { useColors } from "@/hooks/useColors";
+import {
+  noteInterstitialShown,
+  noteRaceCompleted,
+  shouldShowInterstitial,
+} from "@/lib/interstitialPolicy";
 
 function fmt(t: number) {
   if (!isFinite(t)) return "—";
@@ -47,6 +53,16 @@ export default function ResultsScreen() {
 
   const [doubleAdVisible, setDoubleAdVisible] = useState(false);
   const [doubled, setDoubled] = useState(false);
+  const [interstitialVisible, setInterstitialVisible] = useState(false);
+  const pendingNavRef = useRef<(() => void) | null>(null);
+  const countedRef = useRef(false);
+
+  // Count this completed race exactly once when the results screen mounts.
+  useEffect(() => {
+    if (countedRef.current) return;
+    countedRef.current = true;
+    if (finished) noteRaceCompleted();
+  }, [finished]);
 
   const baseTotal = coins + bonus;
   const doubleBonus = doubled ? coins : 0;
@@ -60,6 +76,23 @@ export default function ResultsScreen() {
     if (!rewarded) return;
     addBonusCoins(coins);
     setDoubled(true);
+  };
+
+  const navigateWithInterstitial = (fn: () => void) => {
+    if (shouldShowInterstitial()) {
+      pendingNavRef.current = fn;
+      setInterstitialVisible(true);
+    } else {
+      fn();
+    }
+  };
+
+  const onInterstitialClosed = () => {
+    setInterstitialVisible(false);
+    noteInterstitialShown();
+    const fn = pendingNavRef.current;
+    pendingNavRef.current = null;
+    if (fn) setTimeout(fn, 0);
   };
 
   return (
@@ -224,23 +257,29 @@ export default function ResultsScreen() {
             variant={canDouble ? "secondary" : "primary"}
             size={canDouble ? "md" : "lg"}
             onPress={() =>
-              router.replace({
-                pathname: "/race",
-                params: { track: trackId, mode },
-              })
+              navigateWithInterstitial(() =>
+                router.replace({
+                  pathname: "/race",
+                  params: { track: trackId, mode },
+                }),
+              )
             }
           />
           <GameButton
             label="Garage"
             icon="settings"
             variant="secondary"
-            onPress={() => router.replace("/garage")}
+            onPress={() =>
+              navigateWithInterstitial(() => router.replace("/garage"))
+            }
           />
           <GameButton
             label="Home"
             icon="home"
             variant="ghost"
-            onPress={() => router.replace("/")}
+            onPress={() =>
+              navigateWithInterstitial(() => router.replace("/"))
+            }
           />
         </View>
       </View>
@@ -250,6 +289,11 @@ export default function ResultsScreen() {
         title="Double your race coins"
         reward={`+${coins} extra coins`}
         onClose={onDoubleAdClosed}
+      />
+
+      <InterstitialAdOverlay
+        visible={interstitialVisible}
+        onClose={onInterstitialClosed}
       />
     </View>
   );
