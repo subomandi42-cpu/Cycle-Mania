@@ -18,6 +18,29 @@ export const TEST_INTERSTITIAL_ID =
     ? "ca-app-pub-3940256099942544/4411468910"
     : "ca-app-pub-3940256099942544/1033173712";
 
+// Real Velocity Pedals AdMob ad unit IDs (publisher 1044154545716772).
+// One ad unit per format — used on both iOS and Android. If you ever want
+// per-platform reporting, create separate units in AdMob and split these.
+export const PROD_BANNER_ID = "ca-app-pub-1044154545716772/7130202511";
+export const PROD_REWARDED_ID = "ca-app-pub-1044154545716772/1818166081";
+export const PROD_INTERSTITIAL_ID = "ca-app-pub-1044154545716772/7210093569";
+
+// In Metro / dev builds (__DEV__ === true) we always serve Google's test
+// units. Release / store builds (__DEV__ === false) automatically switch
+// to the real units so revenue starts flowing once you publish.
+// To preview real ads on your phone *before* publishing, either:
+//   1. Build a release/preview build with `eas build --profile preview`
+//      (this sets __DEV__ to false), OR
+//   2. Register your device as a test device in AdMob so real units serve
+//      test creatives — see notes in the README.
+const useRealAds = !__DEV__;
+
+export const BANNER_ID = useRealAds ? PROD_BANNER_ID : TEST_BANNER_ID;
+export const REWARDED_ID = useRealAds ? PROD_REWARDED_ID : TEST_REWARDED_ID;
+export const INTERSTITIAL_ID = useRealAds
+  ? PROD_INTERSTITIAL_ID
+  : TEST_INTERSTITIAL_ID;
+
 // Skip native module load when running inside Expo Go — the AdMob native
 // SDK isn't bundled into Expo Go, so any access would crash. A custom
 // development build (eas build / expo prebuild) is required for real ads.
@@ -52,7 +75,7 @@ export async function showRewardedAd(): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     try {
       const m = mod!;
-      const ad = m.RewardedAd.createForAdRequest(TEST_REWARDED_ID, {
+      const ad = m.RewardedAd.createForAdRequest(REWARDED_ID, {
         requestNonPersonalizedAdsOnly: true,
       });
       let earned = false;
@@ -106,7 +129,7 @@ export async function showInterstitialAd(): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     try {
       const m = mod!;
-      const ad = m.InterstitialAd.createForAdRequest(TEST_INTERSTITIAL_ID, {
+      const ad = m.InterstitialAd.createForAdRequest(INTERSTITIAL_ID, {
         requestNonPersonalizedAdsOnly: true,
       });
       const subs: Array<() => void> = [];

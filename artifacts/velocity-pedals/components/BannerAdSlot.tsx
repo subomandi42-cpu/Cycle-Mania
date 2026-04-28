@@ -3,9 +3,9 @@ import React, { useState } from "react";
 import { StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import {
+  BANNER_ID,
   NativeBannerAd,
   NativeBannerAdSize,
-  TEST_BANNER_ID,
   adsAvailable,
 } from "@/lib/ads";
 import { useColors } from "@/hooks/useColors";
@@ -31,7 +31,7 @@ export function BannerAdSlot({ style }: Props) {
     return (
       <View style={[styles.wrap, style]} pointerEvents="box-none">
         <Banner
-          unitId={TEST_BANNER_ID}
+          unitId={BANNER_ID}
           size={NativeBannerAdSize.ANCHORED_ADAPTIVE_BANNER}
           requestOptions={{ requestNonPersonalizedAdsOnly: true }}
           onAdFailedToLoad={() => setFailed(true)}
