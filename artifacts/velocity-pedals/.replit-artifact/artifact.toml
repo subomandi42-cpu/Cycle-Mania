@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/"
+title = "Velocity Pedals"
+version = "1.0.0"
+id = "artifacts/velocity-pedals"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/" ]
+localPort = 23321
+
+[services.development]
+run = "pnpm --filter @workspace/velocity-pedals run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/velocity-pedals", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/velocity-pedals", "run", "serve" ]
+
+[services.env]
+PORT = "23321"
+BASE_PATH = "/"
