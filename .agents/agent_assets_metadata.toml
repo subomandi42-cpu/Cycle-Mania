@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "XWwufoqpLvXvbkHE00lvO"
@@ -24,3 +23,9 @@ id = "gKzHBNrGcdGLVAHjKxX1X"
 uri = "file://artifacts/velocity-pedals/assets/images/track-coastal.png"
 type = "image"
 title = "generated_image"
+
+[[outputs]]
+id = "xW9caVZSw4Yf68FkKQtI3"
+uri = "file://exports/velocity-pedals-source.zip"
+type = "unspecified"
+title = "Velocity Pedals — full source (5 MB)"
