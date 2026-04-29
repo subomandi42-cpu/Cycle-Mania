@@ -73,6 +73,21 @@ export default function HomeScreen() {
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFillObject}
           />
+          <Pressable
+            onPress={() => router.push("/settings")}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.heroSettings,
+              {
+                backgroundColor: pressed
+                  ? "rgba(255,255,255,0.22)"
+                  : "rgba(255,255,255,0.12)",
+                borderColor: "rgba(255,255,255,0.25)",
+              },
+            ]}
+          >
+            <Feather name="settings" size={16} color="#ffffff" />
+          </Pressable>
           <View style={styles.heroRow}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.heroEyebrow, { color: colors.primary }]}>
@@ -533,6 +548,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 8,
     borderTopWidth: 1,
+  },
+  heroSettings: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    zIndex: 2,
   },
   hero: {
     padding: 20,
