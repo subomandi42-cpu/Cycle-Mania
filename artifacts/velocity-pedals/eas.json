@@ -1,42 +1,40 @@
-{
-  "cli": {
-    "version": ">= 13.0.0",
-    "appVersionSource": "local"
-  },
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "android": {
-        "buildType": "apk"
-      }
-    },
-    "preview": {    "preview": {
-        "env": {
-          "JAVA_HOME": "/usr/lib/jvm/java-17-openjdk-amd64"
-        },
 
-      "distribution": "internal",
-      "channel": "preview",
-      "node": "20.18.0",
-      "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease"
+      {
+        "cli": {
+          "version": ">= 13.1.1",
+          "appVersionSource": "local"
+        },
+        "build": {
+          "development": {
+            "developmentClient": true,
+            "distribution": "internal",
+            "android": {
+              "buildType": "apk"
+            }
+          },
+          "preview": {
+            "env": {
+              "JAVA_HOME": "/usr/lib/jvm/java-17-openjdk-amd64"
+            },
+            "distribution": "internal",
+            "channel": "preview",
+            "node": "20.18.0",
+            "android": {
+              "buildType": "apk",
+              "gradleCommand": ":app:assembleRelease"
+            }
+          },
+          "production": {
+            "channel": "production",
+            "autoIncrement": true,
+            "android": {
+              "buildType": "app-bundle"
+            }
+          }
+        }
       }
-    },
-    "production": {
-      "channel": "production",
-      "autoIncrement": true,
-      "android": {
-        "buildType": "app-bundle"
-      }
-    }
-  },
-  "submit": {
-    "production": {
-      "android": {
-        "track": "internal"
-      }
-    }
-  }
-}
+
+    
+  
+  
+    
