@@ -11,7 +11,11 @@
         "buildType": "apk"
       }
     },
-    "preview": {
+    "preview": {    "preview": {
+        "env": {
+          "JAVA_HOME": "/usr/lib/jvm/java-17-openjdk-amd64"
+        },
+
       "distribution": "internal",
       "channel": "preview",
       "node": "20.18.0",
