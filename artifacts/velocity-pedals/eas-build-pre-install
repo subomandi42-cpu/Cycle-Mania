@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-echo "[eas-build-pre-install] Node: $(node --version)"
-echo "[eas-build-pre-install] Activating Corepack with pnpm 10.26.1"
-corepack enable
-corepack prepare pnpm@10.26.1 --activate
-echo "[eas-build-pre-install] pnpm $(pnpm --version) ready"
