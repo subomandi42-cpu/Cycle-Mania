@@ -8,7 +8,8 @@
     "build": "node scripts/build.js",
     "serve": "node server/serve.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "eas-build-pre-install": "npm install -g pnpm@10.26.1 && sudo apt-get update && sudo apt-get install -y openjdk-17-jdk && export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64"
+    "eas-build-pre-install": "npm install -g pnpm@10.26.1"
+
   },
 
   "devDependencies": {
